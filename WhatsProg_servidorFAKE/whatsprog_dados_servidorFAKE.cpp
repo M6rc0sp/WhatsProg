@@ -173,8 +173,9 @@ mysocket_status WhatsProgDadosServidor::listen(const char *port, int nconex)
 void WhatsProgDadosServidor::closeSockets()
 {
   c.close();
+  iterUsuario iUser;
   // No servidor FAKE, soh existe um usuario
-  if (user.connected()) user.close();
+  if (iUser->connected()) iUser->close();
 }
 
 /* **************************************************************************************
@@ -187,32 +188,34 @@ para o servidor real, a nao ser que seja feita uma analise cuidadosa.
 /// Em seguida, simula o envio da confirmacao de entrega e remove do buffer
 /// No servidor real deveria ser:
 /// void WhatsProgDadosServidor::enviarRecebidas(iterMensagem iMsg, iterUsuario iDest)
-void WhatsProgDadosServidor::enviarMensagem(int i)
+void WhatsProgDadosServidor::enviarMensagem(iterMensagem &iMsg, iterUsuario &iDest)
 {
-  Mensagem M; // No real, haveria um iterator para msg, nao precisaria criar variavel
+  //Mensagem M; // No real, haveria um iterator para msg, nao precisaria criar variavel
+  listMensagem listMsg;
   try
   {
     // Testa os parametros
-    if (i<0 || i>1 || !user.connected()) throw 1;
-    M = paraUsuario[i];
-    if (M.getStatus() !=  MsgStatus::MSG_RECEBIDA ||
-        M.getDestinatario() != user.getLogin()) throw 1;
+    bool findMsg = find(listMsg.begin(), listMsg.end(), iMsg) != listMsg.end();
+    if (findMsg || !iDest->connected()) throw 1;
+    //M = paraUsuario[i];
+    if (iMsg->getStatus() !=  MsgStatus::MSG_RECEBIDA ||
+        iMsg->getDestinatario() != iDest->getLogin()) throw 1;
 
     // Envia a mensagem pelo socket
-    if (user.write_int(CMD_NOVA_MSG) != mysocket_status::SOCK_OK) throw 2;
-    if (user.write_int(M.getId()) != mysocket_status::SOCK_OK) throw 3;
-    if (user.write_string(M.getRemetente()) != mysocket_status::SOCK_OK) throw 4;
-    if (user.write_string(M.getTexto()) != mysocket_status::SOCK_OK) throw 5;
+    if (iDest->write_int(CMD_NOVA_MSG) != mysocket_status::SOCK_OK) throw 2;
+    if (iDest->write_int(iMsg->getId()) != mysocket_status::SOCK_OK) throw 3;
+    if (iDest->write_string(iMsg->getRemetente()) != mysocket_status::SOCK_OK) throw 4;
+    if (iDest->write_string(iMsg->getTexto()) != mysocket_status::SOCK_OK) throw 5;
 
     // Mensagem enviada
-    imprimeComandoEnviado(user.getLogin(), CMD_NOVA_MSG,
-                          M.getId(), M.getRemetente());
-    M.setStatus(MsgStatus::MSG_ENTREGUE);
-    paraUsuario[i] = M;
+    imprimeComandoEnviado(iDest->getLogin(), CMD_NOVA_MSG,
+                          iMsg->getId(), iMsg->getRemetente());
+    iMsg->setStatus(MsgStatus::MSG_ENTREGUE);
+    //paraUsuario[i] = M;
 
     // Procura o usuario remetente
     /* No servidor FAKE soh compara com os 2 nomes simulados */
-    if (M.getRemetente()!="userfake1" && M.getRemetente()!="userfake2") throw 6;
+    if (iMsg->getRemetente()!="userfake1" && iMsg->getRemetente()!="userfake2") throw 6;
 
     // Remetente existe. Testa se estah conectado
     // Se sim, envia a confirmacao de entrega da mensagem
@@ -223,9 +226,9 @@ void WhatsProgDadosServidor::enviarMensagem(int i)
        e a eliminacao da msg do buffer */
     {
       // Mensagem enviada
-      imprimeComandoEnviado(M.getRemetente(), CMD_MSG_ENTREGUE, M.getId(), "");
+      imprimeComandoEnviado(iMsg->getRemetente(), CMD_MSG_ENTREGUE, iMsg->getId(), "");
       // Remove a msg do buffer
-      paraUsuario[i] = Mensagem();
+      //paraUsuario[i] = Mensagem();
     }
   }
   catch (int erro)
@@ -233,10 +236,10 @@ void WhatsProgDadosServidor::enviarMensagem(int i)
     if (erro>=2 && erro<=5)
     {
       // Desconecta o destinatario se houve erro no envio pelo socket
-      user.close();
+      iDest->close();
     }
     cerr << "Erro " << erro << " no envio da mensagem para destinatario "
-         << user.getLogin() << endl;
+         << iDest->getLogin() << endl;
   }
 }
 
@@ -250,36 +253,38 @@ para o servidor real, a nao ser que seja feita uma analise cuidadosa.
 /// Apos o envio da confirmacao, remove a msg do buffer
 /// No servidor real deveria ser:
 /// void WhatsProgDadosServidor::enviarConfirmacao(iterMensagem iMsg, iterUsuario iRemet)
-void WhatsProgDadosServidor::enviarConfirmacao(int i)
+void WhatsProgDadosServidor::enviarConfirmacao(iterMensagem &iMsg, iterUsuario &iRemet)
 {
-  Mensagem M; // No real, haveria um iterator para msg, nao precisaria criar variavel
+  //Mensagem M; // No real, haveria um iterator para msg, nao precisaria criar variavel
+  listMensagem listMsg;
   try
   {
     // Testa os parametros
-    if (i<0 || i>1 || !user.connected()) throw 1;
-    M = doUsuario[i];
-    if (M.getStatus() !=  MsgStatus::MSG_ENTREGUE ||
-        M.getRemetente() != user.getLogin()) throw 1;
+    bool findMsg = find(listMsg.begin(), listMsg.end(), iMsg) != listMsg.end();
+    if (findMsg || !iRemet->connected()) throw 1;
+    //M = doUsuario[i];
+    if (iMsg->getStatus() !=  MsgStatus::MSG_ENTREGUE ||
+        iMsg->getRemetente() != iRemet->getLogin()) throw 1;
 
     // Envia a confirmacao pelo socket
     if (user.write_int(CMD_MSG_ENTREGUE) != mysocket_status::SOCK_OK) throw 2;
-    if (user.write_int(M.getId()) != mysocket_status::SOCK_OK) throw 3;
+    if (user.write_int(iMsg->getId()) != mysocket_status::SOCK_OK) throw 3;
 
     // Confirmacao enviada
-    imprimeComandoEnviado(user.getLogin(), CMD_MSG_ENTREGUE,
-                          M.getId(), "");
+    imprimeComandoEnviado(iRemet->getLogin(), CMD_MSG_ENTREGUE,
+                          iMsg->getId(), "");
     // Remove a msg do buffer
-    doUsuario[i] = Mensagem();
+    //doUsuario[i] = Mensagem();
   }
   catch (int erro)
   {
     if (erro>=2 && erro<=3)
     {
       // Desconecta o remetente se houve erro no envio pelo socket
-      user.close();
+      iRemet->close();
     }
     cerr << "Erro " << erro << " no envio de confirmacao de entrega para remetente "
-         << user.getLogin() << endl;
+         << iRemet->getLogin() << endl;
   }
 }
 
@@ -303,12 +308,20 @@ int WhatsProgDadosServidor::main_thread()
   string texto;
   // Mensagem recebida/enviada
   Mensagem M;
+
+  listMensagem listMsg;
+  iterMensagem iMsg;
+  iterUsuario iUser; //convertendo essa função para esse modelo
+
+  //iterUsuario iDest;
+  //iterUsuario iRemet;
+
   // As ultimas ids dos usuarios fake (soh faz sentido no servidor fake)
   // No servidor real, as last_id estao armazenados em cada usuario na
   // lista de usuarios
-  int32_t last_id[2] = {0,0};
+  //int32_t last_id[2] = {0,0};
   // O indice do usuario fake
-  int id_fake;
+  //int id_fake;
 
   while (!fim)
   {
@@ -324,9 +337,9 @@ int WhatsProgDadosServidor::main_thread()
       // Soh tem um usuario neste servidor fake...
       // No servidor real, teria que percorrer a lista de usuarios e incluir
       // todos os que estiverem conectados
-      if (user.connected())
+      if (iUser->connected())
       {
-        f.include(user.getSocket());
+        f.include(iUser->getSocket());
       }
 
       // Espera que chegue algum dado em qualquer dos sockets da fila
@@ -345,7 +358,7 @@ int WhatsProgDadosServidor::main_thread()
         /* **************************************************************************************
         ATENCAO: ***NADA*** da parte a seguir da implementacao do servidor FAKE pode ser adaptada
         para o servidor real.
-        ************************************************************************************** */
+        **************************************************************************************
         // NESTE SERVIDOR FAKE, VAMOS UTILIZAR O TIMEOUT PARA SIMULAR O COMPORTAMENTO DOS
         // USUARIOS FAKE: userfake1 e userfake2
         //
@@ -355,7 +368,7 @@ int WhatsProgDadosServidor::main_thread()
         //
         // Tem um usuario definido (mesmo que nao esteja conectado)?
         // Senao, nao envia mensagens simuladas
-        if (testarNomeUsuario(user.getLogin()))
+        if (testarNomeUsuario(iUser->getLogin()))
         {
           string remetente = "userfake?";
           for (int i=0; i<2; ++i)
@@ -365,33 +378,34 @@ int WhatsProgDadosServidor::main_thread()
             if (rand()%4==0 && paraUsuario[i].getStatus()==MsgStatus::MSG_INVALIDA)
             {
               remetente[8] = char('1'+i);  // userfake1 ou userfake2
-              ++last_id[i]; // Incrementa a ultima id antes de enviar proxima msg
+              //++last_id[i]; // Incrementa a ultima id antes de enviar proxima msg
+              iUser->setLastID(iUser->getLastID()++);
 
               // Forma a mensagem
-              M.setStatus(MsgStatus::MSG_RECEBIDA);
-              M.setRemetente(remetente);
-              M.setDestinatario(user.getLogin());
-              M.setId(last_id[i]);
-              M.setTexto(string("Msg")+to_string(last_id[i]));
+              iMsg->setStatus(MsgStatus::MSG_RECEBIDA);
+              iMsg->setRemetente(remetente);
+              iMsg->setDestinatario(iUser->getLogin());
+              iMsg->setId(iUser->getLastID());
+              iMsg->setTexto(string("Msg")+to_string(iUser->getLastID());
 
               // Informa que foi "recebida" uma nova mensagem
-              imprimeComandoRecebido(remetente, CMD_NOVA_MSG, M.getId(), user.getLogin());
+              imprimeComandoRecebido(remetente, CMD_NOVA_MSG, iMsg->getId(), iUser->getLogin());
               // Insere a mensagem no "buffer"
-              paraUsuario[i]=M;
+              //paraUsuario[i]=M;
               // Informa que foi "enviada" a confirmacao de recebimento para o remetente fake
-              imprimeComandoEnviado(remetente, CMD_MSG_RECEBIDA, last_id[i]);
+              imprimeComandoEnviado(remetente, CMD_MSG_RECEBIDA, iUser->getLastID());
 
               // Testa se o destinatario estah conectado
               // Se sim, envia a mensagem e muda status para MSG_ENTREGUE
-              if (user.connected())
+              if (iUser->connected())
               {
-                enviarMensagem(i);
+                enviarMensagem(iMsg, iUser);
               }
             } // fim if (rand()%10==0 && ...
           } // fim for
         } // if (testarNomeUsuario
 
-        /* Fim da parte que ***NAO*** pode ser adaptada para o servidor real */
+        // Fim da parte que ***NAO*** pode ser adaptada para o servidor real */
         break; // fim do case mysocket_status::SOCK_TIMEOUT
       case mysocket_status::SOCK_OK: // resultado do wait_read
         // Houve atividade em algum socket da fila
@@ -403,10 +417,10 @@ int WhatsProgDadosServidor::main_thread()
           // Soh tem um usuario neste servidor fake...
           // No servidor real, teria que percorrer a lista de usuarios e testar
           // cada um dos sockets de usuario
-          if (!fim && user.connected() && f.had_activity(user.getSocket()))
+          if (!fim && iUser->connected() && f.had_activity(iUser->getSocket()))
           {
             // Leh o comando recebido do cliente
-            iResult = user.read_int(cmd);
+            iResult = iUser->read_int(cmd);
             // Pode ser mysocket_status::SOCK_OK, mysocket_status::SOCK_TIMEOUT,
             // mysocket_status::SOCK_DISCONNECTED ou mysocket_status::SOCK_ERRO
             // Nao deve ser mysocket_status::SOCK_TIMEOUT porque a funcao read_int
@@ -429,22 +443,22 @@ int WhatsProgDadosServidor::main_thread()
               break;
             case CMD_NOVA_MSG:
               // Receber a msg
-              iResult = user.read_int(id, TIMEOUT_WHATSPROG*1000);
+              iResult = iUser->read_int(id, TIMEOUT_WHATSPROG*1000);
               if (iResult != mysocket_status::SOCK_OK) throw 3;
-              iResult = user.read_string(destinatario, TIMEOUT_WHATSPROG*1000);
+              iResult = iUser->read_string(destinatario, TIMEOUT_WHATSPROG*1000);
               if (iResult != mysocket_status::SOCK_OK) throw 4;
-              iResult = user.read_string(texto, TIMEOUT_WHATSPROG*1000);
+              iResult = iUser->read_string(texto, TIMEOUT_WHATSPROG*1000);
               if (iResult != mysocket_status::SOCK_OK) throw 5;
 
               // Pedido de nova mensagem
-              imprimeComandoRecebido(user.getLogin(), CMD_NOVA_MSG, id, destinatario);
+              imprimeComandoRecebido(iUser->getLogin(), CMD_NOVA_MSG, id, destinatario);
 
               // Preenche o status e remetente da mensagem recebida
               if (!M.setStatus(MsgStatus::MSG_RECEBIDA) ||
-                  !M.setRemetente(user.getLogin())) throw 6;
+                  !M.setRemetente(iUser->getLogin())) throw 6;
 
               // Testa se a id da msg estah correta
-              if (!M.setId(id) || id <= user.getLastId()) throw 7;
+              if (!M.setId(id) || id <= iUser->getLastId()) throw 7;
 
               // Testa se o texto da msg estah correto
               if (!M.setTexto(texto)) throw 8;
@@ -455,13 +469,13 @@ int WhatsProgDadosServidor::main_thread()
 
               // Testa se o destinatario eh valido e eh um usuario cadastrado
               if (!M.setDestinatario(destinatario) ||
-                  (destinatario!="userfake1" && destinatario!="userfake2")) throw 9;
+                  testarNomeUsuario(destinatario)) throw 9;
               // Fixa o indice do usuario FAKE de acordo com o nome
               // Esse indice nao existe no servidor real
-              if (M.getDestinatario()=="userfake1")
+              /*if (M.getDestinatario()=="userfake1")
                 id_fake = 0;
               else
-                id_fake = 1;
+                id_fake = 1;*/
 
               // Mensagem valida
               // Insere a mensagem no buffer
@@ -470,17 +484,17 @@ int WhatsProgDadosServidor::main_thread()
               // (do usuario para userfake1 e para userfake2)
               // No servidor real, a mensagem teria que ser inserida (push_back)
               // na lista de mensagens
-              doUsuario[id_fake] = M;
-
+              //doUsuario[id_fake] = M;
+                listMsg.push_back(M);
               // Atualiza a ultima ID recebida
-              user.setLastId(id);
+              iUser->setLastId(id);
 
               // Envia a confirmacao de recebimento
-              if (user.write_int(CMD_MSG_RECEBIDA) != mysocket_status::SOCK_OK) throw 10;
-              if (user.write_int(id) != mysocket_status::SOCK_OK) throw 11;
+              if (iUser->write_int(CMD_MSG_RECEBIDA) != mysocket_status::SOCK_OK) throw 10;
+              if (iUser->write_int(id) != mysocket_status::SOCK_OK) throw 11;
 
               // Confirmacao de recebimento enviada
-              imprimeComandoEnviado(user.getLogin(), CMD_MSG_RECEBIDA, id);
+              imprimeComandoEnviado(iUser->getLogin(), CMD_MSG_RECEBIDA, id);
 
               // Testa se o destinatario estah conectado
               // Se sim, envia a mensagem e muda status para MSG_ENTREGUE
@@ -498,20 +512,20 @@ int WhatsProgDadosServidor::main_thread()
               imprimeComandoEnviado(M.getDestinatario(), CMD_NOVA_MSG, M.getId(), M.getRemetente());
               // b) Mensagem "enviada": atualiza status no "buffer"
               M.setStatus(MsgStatus::MSG_ENTREGUE);
-              doUsuario[id_fake] = M;
+              doUsuario[iUser] = M; //estudo de buffer;
               // c) Testa se o remetente estah conectado (normalmente sempre estah)
               // Se sim, envia a confirmacao de entrega da mensagem
-              if (user.connected())
+              if (iUser->connected())
               {
-                enviarConfirmacao(id_fake);
+                enviarConfirmacao(iUser);
               }
               // Fim da parte que seria feita pela funcao auxiliar enviarMensagem
               //
               /* Fim da parte que ***NAO*** pode ser adaptada para o servidor real ***************** */
               break; // Fim do case CMD_NOVA_MSG
             case CMD_LOGOUT_USER:
-              imprimeComandoRecebido(user.getLogin(), CMD_LOGOUT_USER);
-              user.close();
+              imprimeComandoRecebido(iUser->getLogin(), CMD_LOGOUT_USER);
+              iUser->close();
               break; // Fim do case CMD_LOGOUT_USER
             } // Fim do switch(cmd)
           } // Fim do if (had_activity) no socket do cliente
@@ -522,21 +536,21 @@ int WhatsProgDadosServidor::main_thread()
           {
             // Comunicacao OK, mensagem invalida
             // Envia comando informando msg mal formatada
-            user.write_int(CMD_MSG_INVALIDA);
-            user.write_int(id);
+            iUser->write_int(CMD_MSG_INVALIDA);
+            iUser->write_int(id);
 
             // Comando de mensagem invalida enviado
-            imprimeComandoEnviado(user.getLogin(), CMD_MSG_INVALIDA, id, destinatario);
+            imprimeComandoEnviado(iUser->getLogin(), CMD_MSG_INVALIDA, id, destinatario);
           }
           else // erro 1-6 e 10-11
           {
             // Erro na comunicacao
             // Fecha o socket
-            user.close();
+            iUser->close();
 
             // Informa o erro imprevisto
             cerr << "Erro " << erro << " na leitura de nova mensagem do cliente "
-                 << user.getLogin() << endl;
+                 << iUser->getLogin() << endl;
           }
         }
 
@@ -585,13 +599,13 @@ int WhatsProgDadosServidor::main_thread()
             ************************************************************************************** */
             if (cmd == CMD_NEW_USER)
             {
-              if (login == user.getLogin()) throw 6; // Erro se jah existir
+              if (login == iUser->getLogin()) throw 6; // Erro se jah existir
 
               // Este servidor fake soh pode ter um usuario cadastrado
               // Soh vai aceitar o novo usuario se ninguem estiver conectado
               // Nao eh um erro no servidor real: pode se conectar um novo se
               // jah houver um ou varios conectados
-              if (user.connected()) throw 6;
+              if (iUser->connected()) throw 6;
 
               // Insere novo usuario
               //
@@ -610,27 +624,27 @@ int WhatsProgDadosServidor::main_thread()
               }
 
               // Troca o usuario
-              if (!user.setUsuario(login,senha)) throw 7;
-              user.resetId(); // Soh no FAKE
-              user.swapSocket(t);
+              if (!iUser->setUsuario(login,senha)) throw 7;
+              iUser->resetId(); // Soh no FAKE
+              iUser->swapSocket(t);
               // No servidor real, deveria inserir o novo usuario na lista de usuarios
             }
             else  // else cmd == CMD_NEW_USER; implica cmd eh CMD_LOGIN_USER
             {
-              if (login != user.getLogin()) throw 8; // Erro se nao existir
+              if (login != iUser->getLogin()) throw 8; // Erro se nao existir
 
               // Testa se a senha confere
-              if (!user.validarSenha(senha)) throw 9; // Senha nao confere
+              if (!iUser->validarSenha(senha)) throw 9; // Senha nao confere
               // Testa se o cliente jah estah conectado
-              if (user.connected()) throw 10; // Usuario jah conectado
+              if (iUser->connected()) throw 10; // Usuario jah conectado
               // Associa o socket que se conectou a um usuario cadastrado
-              user.swapSocket(t);
+              iUser->swapSocket(t);
             } // fim cmd eh CMD_LOGIN_USER
             /* Fim da parte que pode ser PARCIALMENTE adaptada para o servidor real ************** */
 
             // Envia a confirmacao de conexao para o novo cliente
-            if (user.write_int(CMD_LOGIN_OK) != mysocket_status::SOCK_OK) throw 11;
-            imprimeComandoEnviado(user.getLogin(), CMD_LOGIN_OK);
+            if (iUser->write_int(CMD_LOGIN_OK) != mysocket_status::SOCK_OK) throw 11;
+            imprimeComandoEnviado(iUser->getLogin(), CMD_LOGIN_OK);
 
             // Se for um cliente antigo, envia para o cliente que se reconectou:
             // a) as mensagens enviadas para ele que estao no buffer
@@ -649,7 +663,7 @@ int WhatsProgDadosServidor::main_thread()
               for (int i=0; i<2; ++i)
               {
                 if (paraUsuario[i].getStatus() ==  MsgStatus::MSG_RECEBIDA &&
-                    paraUsuario[i].getDestinatario() == user.getLogin())
+                    paraUsuario[i].getDestinatario() == iUser->getLogin())
                 {
                   // No servidor real, essa funcao auxiliar teria que receber como
                   // parametro um iterador para a mensagem a ser enviada e
@@ -665,7 +679,7 @@ int WhatsProgDadosServidor::main_thread()
               for (int i=0; i<2; ++i)
               {
                 if (doUsuario[i].getStatus() ==  MsgStatus::MSG_ENTREGUE &&
-                    doUsuario[i].getRemetente() == user.getLogin())
+                    doUsuario[i].getRemetente() == iUser->getLogin())
                 {
                   // No servidor real, essa funcao auxiliar teria que receber como
                   // parametro um iterador para a mensagem a ser enviada a confirmacao e
@@ -696,7 +710,7 @@ int WhatsProgDadosServidor::main_thread()
               if (erro==11)
               {
                 // Erro na comunicacao com socket do novo cliente
-                user.close();
+                iUser->close();
               }
               else  // erro 1-4
               {
