@@ -29,9 +29,18 @@
 	"whatsprog_dados.h"
 	"whatsprog_dados_servidorFAKE.h"
 
-1671284500 c:\users\paulo\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados_servidorfake.h
+1671557634 c:\users\paulo\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados_servidorfake.h
 	<string>
 	<list>
+	<queue>
 	"../MySocket/mysocket.h"
 	"whatsprog_dados.h"
+
+1671559182 source:c:\users\paulo\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados_servidorfake.cpp
+	<iostream>
+	<sstream>
+	<iomanip>
+	<vector>
+	<algorithm>
+	"whatsprog_dados_servidorFAKE.h"
 
