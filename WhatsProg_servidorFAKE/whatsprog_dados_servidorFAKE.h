@@ -81,19 +81,19 @@ private:
     // No programa real, seriam varios usuarios
     //Usuario user;
 
+    //globais
     typedef std::list<Usuario> listUsuario;
     typedef listUsuario::iterator iterUsuario;
 
     typedef std::list<Mensagem> listMensagem;
-    typedef listMensagem::iterator iterMensagem;
+    typedef listMensagem::iterator iterMensagem; //aqui já se faz o buffer
+    //fim global
 
     // Mensagens pendentes
     // Este servidor fake nao tem um buffer de verdade
     // Apenas guarda, para simulacao, a ultima msg recebida
     // (do usuario para userfake1 e para userfake2)
     //Mensagem doUsuario[2];
-    typedef std::queue<Mensagem> doUsuario;
-    //typedef doUsuario::iterator iMsgFromUser;
     // e a ultima msg enviada (gerada aleatoriamente)
     // (de userfake1 e userfake2 para usuario)
     //Mensagem paraUsuario[2];

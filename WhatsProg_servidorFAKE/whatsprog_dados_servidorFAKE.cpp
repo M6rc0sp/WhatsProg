@@ -191,12 +191,13 @@ para o servidor real, a nao ser que seja feita uma analise cuidadosa.
 void WhatsProgDadosServidor::enviarMensagem(iterMensagem& iMsg, iterUsuario& iDest)
 {
     //Mensagem M; // No real, haveria um iterator para msg, nao precisaria criar variavel
-    listMensagem listMsg;
-    paraUsuario paraUsuario;
+    listMensagem listMsg; //global var
+    paraUsuario paraUsuario; //global var
     try
     {
         // Testa os parametros
-        bool findMsg = find(listMsg.begin(), listMsg.end(), *iMsg) != listMsg.end();
+        //bool findMsg = find(listMsg.begin(), listMsg.end(), *iMsg) != listMsg.end();
+        //testar de user é o end() ou a msg ou se o user está desconectado
         if (findMsg || !iDest->connected()) throw 1;
         //M = paraUsuario[i];
         if (iMsg->getStatus() !=  MsgStatus::MSG_RECEBIDA ||
@@ -262,7 +263,9 @@ void WhatsProgDadosServidor::enviarConfirmacao(iterMensagem &iMsg, iterUsuario &
     try
     {
         // Testa os parametros
-        bool findMsg = true;//find(listMsg.begin(), listMsg.end(), *iMsg) != listMsg.end();
+       //find(listMsg.begin(), listMsg.end(), *iMsg) != listMsg.end();
+
+       //testar de user é o end() ou a msg ou se o user está desconectado
         if (findMsg || !iRemet->connected()) throw 1;
         //M = doUsuario[i];
         if (iMsg->getStatus() !=  MsgStatus::MSG_ENTREGUE ||
