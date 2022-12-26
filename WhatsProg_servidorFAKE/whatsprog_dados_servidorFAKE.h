@@ -67,6 +67,20 @@ public:
     bool operator==(const std::string& L) const;
 };
 
+/*globais
+typedef std::list<Usuario> listUsuario;
+typedef listUsuario::iterator iterUsuario;
+
+typedef std::list<Mensagem> listMensagem;
+typedef listMensagem::iterator iterMensagem; //aqui já se faz o buffer
+//fim global*/
+
+typedef std::list<Usuario> LU;
+typedef LU::iterator itUser;
+
+typedef std::list<Mensagem> LM;
+typedef LM::iterator itMsg;
+
 class WhatsProgDadosServidor
 {
 private:
@@ -81,14 +95,6 @@ private:
     // No programa real, seriam varios usuarios
     //Usuario user;
 
-    //globais
-    typedef std::list<Usuario> listUsuario;
-    typedef listUsuario::iterator iterUsuario;
-
-    typedef std::list<Mensagem> listMensagem;
-    typedef listMensagem::iterator iterMensagem; //aqui já se faz o buffer
-    //fim global
-
     // Mensagens pendentes
     // Este servidor fake nao tem um buffer de verdade
     // Apenas guarda, para simulacao, a ultima msg recebida
@@ -97,14 +103,16 @@ private:
     // e a ultima msg enviada (gerada aleatoriamente)
     // (de userfake1 e userfake2 para usuario)
     //Mensagem paraUsuario[2];
-    typedef std::queue<Mensagem> paraUsuario;
-    //typedef paraUsuario::iterator iMsgToUser;
+    LU listUser;
+    LM listMsg;
+    LM::iterator iMsg;
+    LU::iterator iUser;
     // Envia uma mensagem "i" que esteja no buffer com status MSG_RECEBIDA
     // e cujo destinatario seja o usuario conectado (caso de uso S.3)
     // Apos o envio, altera o status da msg enviada para MSG_ENTREGUE
     // Em seguida, simula o envio da confirmacao de entrega e remove do buffer
     // No servidor real deveria ser:
-    void enviarMensagem(iterMensagem& iMsg, iterUsuario& iDest);
+    void enviarMensagem(itMsg& iMsg, itUser& iDest);
     //void enviarMensagem(int i);
 
     // Envia uma confirmacao de entrega da mensagem "i"
@@ -112,7 +120,7 @@ private:
     // e cujo remetente seja o usuario conectado (caso de uso S.4)
     // Apos o envio da confirmacao, remove a msg do buffer
     // No servidor real deveria ser:
-    void enviarConfirmacao(iterMensagem& iMsg, iterUsuario& iRemet);
+    void enviarConfirmacao(itMsg& iMsg, itUser& iRemet);
     //void enviarConfirmacao(int i);
     /* Fim da parte que ***NAO*** pode ser adaptada para o servidor real ***************** */
 

@@ -24,15 +24,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES +=\
+    mysocket.cpp \
+    whatsprog_dados.cpp \
+    whatsprog_dados_cliente.cpp \
     whatsprog_login.cpp \
     whatsprog_main.cpp \
     whatsprog_novaconversa.cpp \
-    main_cliente.cpp
+    main_cliente.cpp \
+    whatsprogthread.cpp
 
 HEADERS  += \
+    mysocket.h \
+    whatsprog_dados.h \
+    whatsprog_dados_cliente.h \
     whatsprog_login.h \
     whatsprog_main.h \
-    whatsprog_novaconversa.h
+    whatsprog_novaconversa.h \
+    whatsprogthread.h
 
 FORMS    += \
     whatsprog_login.ui \

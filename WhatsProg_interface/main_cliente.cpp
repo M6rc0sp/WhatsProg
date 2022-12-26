@@ -1,6 +1,5 @@
-#include <QApplication>
-
 #include "whatsprog_main.h"
+#include <QApplication>
 
 int main(int argc, char *argv[])
 {

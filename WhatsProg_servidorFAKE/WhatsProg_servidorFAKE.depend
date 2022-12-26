@@ -44,3 +44,48 @@
 	<algorithm>
 	"whatsprog_dados_servidorFAKE.h"
 
+1671492365 source:c:\users\samsung\documents\whatsprog\mysocket\mysocket.cpp
+	<iostream>
+	<string.h>
+	"mysocket.h"
+	<sys/types.h>
+	<netdb.h>
+	<unistd.h>
+
+1671492365 c:\users\samsung\documents\whatsprog\mysocket\mysocket.h
+	<iostream>
+	<string>
+	<winsock2.h>
+	<ws2tcpip.h>
+	<sys/socket.h>
+
+1671450316 source:c:\users\samsung\documents\whatsprog\whatsprog_servidorfake\main_servidor.cpp
+	<iostream>
+	<thread>
+	"whatsprog_dados.h"
+	"whatsprog_dados_servidorFAKE.h"
+
+1671747609 c:\users\samsung\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados.h
+	<iostream>
+	<fstream>
+	<string>
+	<list>
+
+1671753895 c:\users\samsung\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados_servidorfake.h
+	<string>
+	<list>
+	<queue>
+	"../MySocket/mysocket.h"
+	"whatsprog_dados.h"
+
+1671747603 source:c:\users\samsung\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados.cpp
+	"whatsprog_dados.h"
+
+1671752650 source:c:\users\samsung\documents\whatsprog\whatsprog_servidorfake\whatsprog_dados_servidorfake.cpp
+	<iostream>
+	<sstream>
+	<iomanip>
+	<vector>
+	<algorithm>
+	"whatsprog_dados_servidorFAKE.h"
+
