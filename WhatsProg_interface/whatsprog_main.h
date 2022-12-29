@@ -5,10 +5,8 @@
 #include <QLabel>
 #include "whatsprog_login.h"
 #include "whatsprog_novaconversa.h"
-#include "whatsprogthread.h"
-#include "whatsprog_dados_cliente.h"
-#include "whatsprog_dados.h"
-
+#include "whatsprog_thread.h"
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 namespace Ui {
 class WhatsProgMain;
 }

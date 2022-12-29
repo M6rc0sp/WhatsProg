@@ -1,6 +1,6 @@
 #include "whatsprog_dados_cliente.h"
 #include <algorithm>
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 using namespace std;
 
 /// Construtor default

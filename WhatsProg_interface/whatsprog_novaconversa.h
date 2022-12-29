@@ -2,7 +2,7 @@
 #define WHATSPROG_NOVACONVERSA_H
 
 #include <QDialog>
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 namespace Ui {
 class WhatsProgNovaConversa;
 }

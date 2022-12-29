@@ -31,7 +31,7 @@ SOURCES +=\
     whatsprog_main.cpp \
     whatsprog_novaconversa.cpp \
     main_cliente.cpp \
-    whatsprogthread.cpp
+    whatsprog_thread.cpp
 
 HEADERS  += \
     mysocket.h \
@@ -40,7 +40,7 @@ HEADERS  += \
     whatsprog_login.h \
     whatsprog_main.h \
     whatsprog_novaconversa.h \
-    whatsprogthread.h
+    whatsprog_thread.h
 
 FORMS    += \
     whatsprog_login.ui \

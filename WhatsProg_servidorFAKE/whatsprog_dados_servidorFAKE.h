@@ -7,6 +7,7 @@
 #include "../MySocket/mysocket.h"
 #include "whatsprog_dados.h"
 
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 /// Os usuarios cadastrados no servidor
 class Usuario
 {

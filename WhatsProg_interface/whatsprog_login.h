@@ -2,7 +2,7 @@
 #define WHATSPROG_LOGIN_H
 
 #include <QDialog>
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 namespace Ui {
 class WhatsProgLogin;
 }

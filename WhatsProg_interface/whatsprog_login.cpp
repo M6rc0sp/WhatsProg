@@ -1,6 +1,8 @@
 #include "whatsprog_login.h"
 #include "ui_whatsprog_login.h"
-
+#include "whatsprog_dados.h"
+#include <QMessageBox>
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 WhatsProgLogin::WhatsProgLogin(QWidget *parent) :
   QDialog(parent),
   ui(new Ui::WhatsProgLogin),
@@ -29,6 +31,19 @@ void WhatsProgLogin::slotLogin(bool NovoUsuario)
 
 void WhatsProgLogin::on_buttonBox_accepted()
 {
-  // Falta fazer:
+    QString IP, usuario, senha;
+
+    IP = ui->lineEditIpServidor->text();
+    usuario = ui->lineEditNomeUsuario->text();
+    senha = ui->lineEditSenhaUsuario->text();
+
+    if(testarNomeUsuario(usuario.toStdString()) && testarSenha(senha.toStdString()))
+    {
+        emit signConectar(IP, usuario, senha, novoUsuario);
+        ui->lineEditIpServidor->clear();
+        ui->lineEditNomeUsuario->clear();
+        ui->lineEditSenhaUsuario->clear();
+    }
+    else QMessageBox::critical(this, "Erro ao realizar o login", "Dados inválidos");
   // Envia sinal com os dados recuperados dos lineEdit e limpa os campos dos lineEdit
 }

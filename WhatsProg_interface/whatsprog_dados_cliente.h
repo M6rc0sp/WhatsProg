@@ -1,6 +1,6 @@
 #ifndef WHATSPROG_DADOS_CLIENTE_H
 #define WHATSPROG_DADOS_CLIENTE_H
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -10,8 +10,7 @@
 #include <stdint.h>
 #include <mutex>
 #include "whatsprog_dados.h"
-#include "mysocket.h"
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 // Classe utilizada para armazenar uma conversa no cliente
 class Conversa
 {

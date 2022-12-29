@@ -1,5 +1,5 @@
 #include "whatsprog_dados.h"
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 using namespace std;
 
 /// Testa um possivel login: tamanho e soh contem caracteres de 33 a 126

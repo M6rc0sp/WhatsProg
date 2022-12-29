@@ -1,6 +1,6 @@
 #ifndef WHATSPROG_DADOS_H
 #define WHATSPROG_DADOS_H
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 #include <iostream>
 #include <fstream>
 #include <string>

@@ -9,7 +9,7 @@
 #include <QMessageBox>
 #include <cstdio>
 #include <cstdlib>
-
+///Autores: Marcos Paulo Barbosa && Luisa de Moura Galvao Mathias
 using namespace std;
 
 /// a variavel global que contem todas as msgs de todas as conversas
@@ -17,6 +17,7 @@ extern WhatsProgDadosCliente DC;
 
 /// o socket do cliente, a ser utilizado por todas as threads
 extern tcp_mysocket sock;
+extern std::thread thr;
 
 /// Construtor da janela principal da interface
 WhatsProgMain::WhatsProgMain(QWidget *parent) :
@@ -72,7 +73,7 @@ WhatsProgMain::WhatsProgMain(QWidget *parent) :
     ui->tableMensagens->setHorizontalHeaderLabels(QStringList() << "Id" << "Mensagem" <<  "St");
 
     // Os icones do status das mensagens
-    QString dir = ".\\";
+    QString dir = "C:\\Users\\SAMSUNG\\Documents\\WhatsProg\\WhatsProg_interface\\";
     QString pixfile;
 
     pixfile = dir+"status0.png";
@@ -129,10 +130,10 @@ WhatsProgMain::WhatsProgMain(QWidget *parent) :
 
     // Precisa conectar
     // os sinais da classe que contem a thread do cliente
-    connect(thread, SIGNAL(confimarLeitura(IterConversa)),
-            this, SLOT(slotExibirMensagens(IterConversa)));
+    connect(thread, SIGNAL(confirmarLeitura(iterConversa)),
+            this, SLOT(slotExibirMensagens()));
 
-    connect(thread, SIGNAL(novaMensagem(IterConversa)),
+    connect(thread, SIGNAL(novaMensagem(iterConversa)),
             this, SLOT(slotExibirConversas()));
 
     connect(this, SIGNAL(initThread()),
@@ -141,8 +142,8 @@ WhatsProgMain::WhatsProgMain(QWidget *parent) :
     connect(this, SIGNAL(endThread()),
             thread, SLOT(finalizarThread()));
 
-    connect(thread, SIGNAL(desconectar()),
-            this, SLOT(interface_Desconectada()));
+    connect(thread, &WhatsProgThread::desconectar,
+            this, &WhatsProgMain::atualizaEstadoConexao);
 
     // A barra de status
     msgStatus = new QLabel("?");
@@ -246,10 +247,6 @@ void WhatsProgMain::slotExibirMensagens()
                     prov = new QLabel();
                     prov->setPixmap(pixEntregue);
                 }
-                /*if (it->getMensagem(i).getStatus() == MsgStatus::MSG_LIDA){
-                    prov = new QLabel();
-                    prov->setPixmap(pixLida);
-                }*/
                 prov->setScaledContents(true);
                 ui->tableMensagens->setCellWidget(i, 2, prov);
             }
@@ -294,72 +291,75 @@ void WhatsProgMain::atualizaEstadoConexao()
     // Testa se o socket estah conectado e
     // os dados de conexao estao corretamente definidos
     //
-    // Falta fazer
+    if(DC.connected()){
+        string user_servidor = "CONECTADO: " + DC.getMeuUsuario() + "@" + DC.getServidor();
+        msgStatus->setText(user_servidor.c_str());
+        statusBar()->insertWidget(0, msgStatus);
+        ui->menuConversa->setEnabled(1);
+    } else {
+        ui->tableMensagens->clearContents();
+        ui->tableConversas->clearContents();
+
+        msgStatus->setText("NAO CONECTADO");
+        statusBar()->insertWidget(0, msgStatus);
+
+        ui->lineEditMensagem->setEnabled(0);
+        ui->menuMensagens->setEnabled(0);
+        ui->menuConversa->setEnabled(0);
+    }
 }
 
 /// Conecta-se ao servidor
 void WhatsProgMain::slotConectar(const QString &IP, const QString &login,
                                  const QString &senha, bool novoUsuario )
 {
-    // Testa todos os parametros
-    // Depois faz a conexao com servidor
-    //
-    string newIp = IP.toStdString();
-    string newUsuario = login.toStdString();
-    string newSenha = senha.toStdString();
-   /* if(novoUsuario)
-        QMessageBox::critical(this, "Erro ao criar usuário", "Houve algum problema");
-    else
-        QMessageBox::critical(this, "Erro ao logar usuário", "Houve algum problema");
-    */
-    if (sock.connected())
-    {
-        QMessageBox::critical(this, "ERRO", "Esta funcao soh deve ser chamada quando o cliente estah desconectado");
-        //return false;
-    }
-    bool conexaoOK(true);
-    int32_t cmd;
-    if (sock.connect(IP.toStdString(), PORTA_WHATSPROG) != mysocket_status::SOCK_OK)
-    {
-        sock.close();
-        //return false;
-    }
-    if (novoUsuario)
-    {
-        if (conexaoOK) conexaoOK = (sock.write_int(CMD_NEW_USER) != mysocket_status::SOCK_ERROR);
-    }
-    else
-    {
-        if (conexaoOK) conexaoOK = (sock.write_int(CMD_LOGIN_USER) != mysocket_status::SOCK_ERROR);
-        //listar_Conversas();
-    }
-    //if (!conexaoOK) return false;
-    if (conexaoOK) conexaoOK = (sock.write_string(login.toStdString()) != mysocket_status::SOCK_ERROR);
-    if (conexaoOK) conexaoOK = (sock.write_string(senha.toStdString()) != mysocket_status::SOCK_ERROR);
-    if (!conexaoOK)
-    {
-        sock.close();
-        //return false;
-    }
-    conexaoOK = (sock.read_int(cmd,1000*TIMEOUT_WHATSPROG) == mysocket_status::SOCK_OK);
-    if (conexaoOK) conexaoOK = (cmd == CMD_LOGIN_OK);
-    if (!conexaoOK)
-    {
-        sock.close();
-        //return false;
-    }
-    DC.setServidorUsuario(IP.toStdString(),login.toStdString());
-    DC.ler();
-    if (DC.size() == 1)
-    {
-        DC.setConversaAtual(DC.begin());
-    }
-    string user_servidor = ("CONECTADO: " + login + "@" + IP).toStdString();
-    msgStatus->setText(user_servidor.c_str());
-    statusBar()->insertWidget(0, msgStatus);
-    ui->menuConversa->setEnabled(1);
 
-    emit initThread();
+    mysocket_status iResult;
+
+    try
+    {
+        if(sock.connected()) throw "Já conectado";
+        iResult = sock.connect(IP.toStdString(), PORTA_WHATSPROG);
+        if (iResult != mysocket_status::SOCK_OK) throw "Erro na conexao com servidor";
+        if(novoUsuario){
+            sock.write_int(CMD_NEW_USER);
+        } else {
+            sock.write_int(CMD_LOGIN_USER);
+        }
+        iResult = sock.write_string(login.toStdString());
+        if (iResult != mysocket_status::SOCK_OK) throw "Erro no envio do nome do usuario";
+        iResult = sock.write_string(senha.toStdString());
+        if (iResult != mysocket_status::SOCK_OK) throw "Erro no envio da senha do usuario";
+        DC.setServidorUsuario(IP.toStdString(),login.toStdString());
+        DC.ler();
+        if (DC.size() == 1)
+        {
+            DC.setConversaAtual(DC.begin());
+        }
+        string user_servidor = "CONECTADO: " + login.toStdString() + "@" + IP.toStdString();
+        msgStatus->setText(user_servidor.c_str());
+        statusBar()->insertWidget(0, msgStatus);
+        ui->menuConversa->setEnabled(1);
+        emit initThread();
+    }
+    catch (const char* err)
+    {
+        sock.close();
+
+        // Emitir msg de erro
+        emit slotExibirErroMensagem(err);
+        qDebug() << err;
+        ui->tableConversas->clearContents();
+        ui->tableMensagens->clearContents();
+
+        msgStatus->setText("NAO CONECTADO");
+        statusBar()->insertWidget(0, msgStatus);
+
+        ui->lineEditMensagem->setEnabled(0);
+        ui->menuMensagens->setEnabled(0);
+        ui->menuConversa->setEnabled(0);
+    }
+
 }
 
 /// Exibe um pop-up com mensagem de erro
